@@ -6,8 +6,8 @@ db.serialize(() => {
     db.run(`
         CREATE TABLE IF NOT EXISTS question_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            question TEXT,
-            variating_values TEXT, -- Store as JSON string
+            question TEXT, -- Store as string "Question %%var_name%%kg rest of question?"
+            variating_values TEXT, -- Store as JSON string "{var_name: [50,70]}"
             course TEXT,
             question_type TEXT
         )
