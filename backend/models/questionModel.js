@@ -15,6 +15,28 @@ db.serialize(() => {
 });
 
 /**
+ * Add a new question to the database.
+ * @param {string} question - The question text.
+ * @param {string} variatingValues - JSON string of variable values.
+ * @param {string} course - Course name.
+ * @param {string} questionType - Type of the question.
+ * @returns {Promise<void>}
+ */
+const addQuestion = async (question, variatingValues, course, questionType) => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            INSERT INTO question_data (question, variating_values, course, question_type)
+            VALUES (?, ?, ?, ?)
+        `;
+
+        db.run(query, [question, variatingValues, course, questionType], function (err) {
+            if (err) return reject(err);
+            resolve({ success: true, id: this.lastID });
+        });
+    });
+};
+
+/**
  * Fetch a random question matching course and question type.
  * @param {string} course - The selected course.
  * @param {string[]} questionTypes - An array of possible question types.
@@ -85,4 +107,4 @@ const getRandomValue = (range) => {
     return (Math.random() * (max - min) + min).toFixed(2);
 };
 
-module.exports = { getRandomQuestion };
+module.exports = { getRandomQuestion, addQuestion };
