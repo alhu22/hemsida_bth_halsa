@@ -47,7 +47,7 @@ export default function AddQuestion() {
     
     
     return (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "70vh" }}>
             <div style={{ padding: "20px", border: "1px solid #ddd", borderRadius: "8px", width: "400px", boxShadow: "0px 0px 10px rgba(0,0,0,0.1)" }}>
                 <h2>Add Question</h2>
                 <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>

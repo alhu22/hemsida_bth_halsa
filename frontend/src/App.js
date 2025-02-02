@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import AddQuestion from "./addQuestion";
+import ViewQuestion from "./viewQuestion";
 import "./App.css";
 
 function App() {
@@ -14,7 +15,7 @@ function App() {
         </nav>
         <div>
           {activeTab === "upload question" && <AddQuestion />}
-          {activeTab === "get question" && <DataTable />}
+          {activeTab === "get question" && <ViewQuestion />}
         </div>
       </header>
     </div>
