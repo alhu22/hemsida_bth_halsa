@@ -1,5 +1,4 @@
 const express = require("express");
-const axios = require("axios");
 const { getRandomQuestion, addQuestion } = require("../models/questionModel");
 const router = express.Router();
 
@@ -29,27 +28,16 @@ router.get("/get_question", async (req, res) => {
 router.post("/add", async (req, res) => {
     try {
         const { question, course, question_type, variating_values } = req.body;
+        
         if (!question || !course || !question_type || !variating_values) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
 
-        // Send the data to an external service if needed
-        const response = await axios.post("http://localhost:5000/api/question/add", {
-            question,
-            course,
-            question_type,
-            variating_values,
-        });
-
-        if (response.data.success) {
-            return res.status(201).json({ success: true, message: "Question added successfully" });
-        } else {
-            return res.status(500).json({ success: false, message: "Failed to add question" });
-        }
-    } catch (error) {
-        console.error("Error adding question:", error);
-        res.status(500).json({ success: false, message: "Error saving data" });
+        await addQuestion(question, course, question_type, variating_values);
+        res.status(201).json({ success: true, message: "Question successfully added"});
+    } catch (err) {
+        console.error("Error saving question:", err.message);
+        res.status(500).json({ success: false, message: "Error saving question"});
     }
 });
-
 module.exports = router;

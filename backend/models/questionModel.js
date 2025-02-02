@@ -1,5 +1,14 @@
 const sqlite3 = require("sqlite3").verbose();
-const db = new sqlite3.Database("./database/question_data.db");
+const path = require("path");
+const dbPath = path.resolve(__dirname, "../db/question_data.db");
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+      console.error("Failed to connect to the database:", err.message);
+    } else {
+      console.log("Connected to the SQLite database.");
+    }
+});
+
 
 // Initialize the database and create the table
 db.serialize(() => {
@@ -7,7 +16,7 @@ db.serialize(() => {
         CREATE TABLE IF NOT EXISTS question_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             question TEXT, -- Store as string "Question %%var_name%%kg rest of question?"
-            variating_values TEXT, -- Store as JSON string "{var_name: [50,70]}"
+            variating_values TEXT, -- Store as JSON string "{"var_name": [50,70]}"
             course TEXT,
             question_type TEXT
         )
@@ -23,17 +32,9 @@ db.serialize(() => {
  * @returns {Promise<void>}
  */
 const addQuestion = async (question, variatingValues, course, questionType) => {
-    return new Promise((resolve, reject) => {
-        const query = `
-            INSERT INTO question_data (question, variating_values, course, question_type)
-            VALUES (?, ?, ?, ?)
-        `;
-
-        db.run(query, [question, variatingValues, course, questionType], function (err) {
-            if (err) return reject(err);
-            resolve({ success: true, id: this.lastID });
-        });
-    });
+    db.run('INSERT INTO question_data (question, variating_values, course, question_type) VALUES (?, ?, ?, ?)', 
+            [question.trim(), variatingValues.trim(), course.trim(), questionType.trim()]);
+    
 };
 
 /**
@@ -78,33 +79,9 @@ const generateQuestion = (questionTemplate, variatingValues) => {
     let formattedQuestion = questionTemplate;
     let computedAnswer = null;
 
-    // Extract variable name, ranges, etc.
-    const variableName = variatingValues[0];
-    const weightRange = variatingValues[1]; // e.g., [50, 70]
-    const dosageRange = variatingValues[2]; // e.g., [0.25, 1.5]
-
-    // Pick random values within the ranges
-    const randomWeight = getRandomValue(weightRange);
-    const randomDosage = getRandomValue(dosageRange);
-
-    // Replace placeholders in the question template
-    formattedQuestion = formattedQuestion.replace("________", variableName);
-    formattedQuestion = formattedQuestion.replace("___", randomWeight);
-
-    // Compute the answer (weight * dosage)
-    computedAnswer = (randomWeight * randomDosage).toFixed(2); // Keep two decimal places
 
     return { formattedQuestion, answer: computedAnswer };
 };
 
-/**
- * Get a random value between a given range.
- * @param {Array<number>} range - A two-element array [min, max].
- * @returns {number} A random value within the range.
- */
-const getRandomValue = (range) => {
-    const [min, max] = range;
-    return (Math.random() * (max - min) + min).toFixed(2);
-};
 
 module.exports = { getRandomQuestion, addQuestion };
