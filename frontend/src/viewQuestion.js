@@ -1,9 +1,79 @@
 import { useState } from "react";
 import axios from "axios";
 
+export default function ViewQuestion() {
+    const [course, setCourse] = useState("");
+    const [questionType, setQuestionType] = useState("");
+    const [questionData, setQuestionData] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
-export default function AddQuestion() {
+    const fetchRandomQuestion = async () => {
+        setIsLoading(true);
+        setErrorMessage("");
+        setQuestionData(null);
 
+        try {
+            const response = await axios.get("http://localhost:5000/api/question/random", {
+                params: {
+                    course: course || undefined, // Only send if not empty
+                    question_type: questionType || undefined
+                }
+            });
 
-    
+            if (response.data.success) {
+                setQuestionData(response.data.question);
+            } else {
+                setErrorMessage(response.data.message || "No question found.");
+            }
+        } catch (err) {
+            setErrorMessage(err.response?.data?.message || "Failed to fetch question. Try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div style={{ padding: "20px", border: "1px solid #ddd", borderRadius: "8px", width: "400px", boxShadow: "0px 0px 10px rgba(0,0,0,0.1)" }}>
+            <h2>View Random Question</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <label>Course</label>
+                <input type="text" 
+                    value={course} 
+                    onChange={(e) => setCourse(e.target.value)}
+                    placeholder="Ex. ab1234" />
+
+                <label>Question Type</label>
+                <input type="text" 
+                    value={questionType} 
+                    onChange={(e) => setQuestionType(e.target.value)}
+                    placeholder="Ex. test type A" />
+
+                <button 
+                    onClick={fetchRandomQuestion} 
+                    disabled={isLoading}
+                    style={{ 
+                        padding: "10px", 
+                        backgroundColor: "#007BFF", 
+                        color: "white", 
+                        border: "none", 
+                        borderRadius: "5px", 
+                        cursor: "pointer" }}>
+                    {isLoading ? "Loading..." : "Get Question"}
+                </button>
+
+                {/* Display fetched question */}
+                {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
+                {questionData && (
+                    <div style={{ marginTop: "20px", padding: "10px", border: "1px solid #ccc", borderRadius: "5px", backgroundColor: "#f9f9f9" }}>
+                        <p><strong>Question:</strong> {questionData.question}</p>
+                        <p><strong>Answer Formula:</strong> {questionData.answerFormula}</p>
+                        <p><strong>Unit:</strong> {questionData.answerUnit}</p>
+                        <p><strong>Course:</strong> {questionData.course}</p>
+                        <p><strong>Type:</strong> {questionData.question_type}</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 }
