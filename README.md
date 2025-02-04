@@ -1,25 +1,22 @@
-# läkemedelsberäkningar
-Hemsida för läkemedelsstudenterna på BTH ska kunna öva på olika läkemedelsberäkningar.
+# **läkemedelsberäkningar**
+En webbapplikation för sjuksköterskestudenter vid BTH för at öva på olika läkemedelsberäkningar.
 
 
-## Databas
+## **Databas**
++----------------------+------+--------------------------------------------------------------------------------------+
+| Column               | Typ  | Besktivning                                                                          |
+|----------------------|------|--------------------------------------------------------------------------------------|
+|       **id**         | int  | UID with auto increment.                                                             |
+|    **question**      | text | The string for the question.                                                         |
+|   **answer_unit**    | text | The unit of the answer store as string.                                              |
+|  **answer_formula**  | text | A string with the formula to calculate the answer using the variables.               |
+| **variating_values** | text | A string in JSON format that sets the rules to generate the values for the question. |
+|     **course**       | tesxt| The course code for the question two letters and 4 numbers.                          |
+|  **question_type**   | text | Short string describing the question type.                                           |
++----------------------+------+--------------------------------------------------------------------------------------+
 
-| id | question | anser_unit | answer_formula | variating_values | course | question_type |
-id(int): UID with auto increment
-question(text): The string for the question
-    Ex. "Question %%var_name%%kg rest of question %%var_name2%%?"
-answer_unit(text): The unit of the answer store as string.
-    Ex. "kg"
-    Ex. "ml/s"
-answer_formula(text): A string with the formula to calculate the answer using the variables.
-    Ex. "var_name + var_name2"
-variating_values(text): A string in JSON format that sets the rules to generate the values for the question.
-    Ex. "{'var_name': [50, 70], 'var_name2': [10, 20]}"
-course(text): The course code for the question two letters and 4 numbers. (This will later be connected to a course database with the name of the course as well)
-    Ex. "ab1234"
-question_type(text): Short string describing the question type
-    Ex. "Enhetsomvandling"
-
+### **Exempel på en fråga**
+```json
 {
     "question": "Omvandla %%var_name%%kg till %%var_name2%%g.",
     "answer_unit": "g",
@@ -28,59 +25,107 @@ question_type(text): Short string describing the question type
     "course": "KM1423",
     "question_type": "Enhetsomvandling"
 }
+```
+## **Formatering av frågor**
+- Variabler omges av `%%variabel_namn%%`.
+- Variabelnamn får endast innehålla:
+  - **Bokstäver (A-Z, a-z)**
+  - **Siffror (0-9)**
+  - **Underscore (_)**
+  - **Måste börja med en bokstav.**
+  - Inga mellanslag.
+- Specialhantering:
+  - `%%name%%` och `%%namn%%` ersätts automatiskt med slumpmässiga namn från en lista.
+  - `condition` används för att definiera mer avancerade regler för generering av variabler.
 
-### Formatera Frågor
-Variabler representeras i frågot med %%variabel_namn%%.
-    Innanför %% får der endast vara stora och små bockstäver a-z, A-Z, siffror 0-9, och _. Inga mellanslag.
-    Dock måste variabelnamnet börja med en bokstav. (a-z, A-Z)
-    Om endast %%name%% eller %%namn%% sätts in i frågan kommer det att automatiskt ersättas med ett slumpmässigt namn från en lista.
-    Variabel namn som är 'upptagna':
-        condition: För att kunna generera regler kring hur variabelvärderna bestäms.
-        name & namn: För att ståppa in ett slumpmäsigt namn.
 
-### Formatera Varierande Variabler
-Vilka värden som variabeln ska anta kan defineras på olika sätt.
-    Vill man ha att det är sen siffera mellan två tal är det [minsta, största]
-        Ex. [4, 16] då är dert ett heltal mellan 4 och 16
-    Vill man att det ska anta ett värde i en lista av värden så representeras det genom en lista på dessa siffror. [tal1, tal2, tal3, ..., taln]
-        NOTE: Om man vill ha valet mellan två tal måste man skriva det största talet först sedan det minsta talet. (UNDERLINE THIS SECTION)
-        NOTE: Om man skriver 3 tal så måste det tredje talet vara större än andra - första
-        Ex. [20, 10]
-        Ex. [5, 10, 15, 20]
-        Ex. [1, 0.5, 10]
-    Vill man att värdena ska anta ett flyttal (att sifferan har decimaler) går det att indikera som ett tredje element i en lista [minsta, största, steg]. (UNDERLINE THIS SECTION) 
-        NOTE: steg måste vara mindre än största talet - minsta talet.
-        Ex. [1, 10, 0.1] Då är det ett slumpmässigt tal mellan 1 och 10 med en decimal.
-        Ex. [-10, 10, 0.01] Då är det ett slumpmässigt tal mellan -10 och 10 med två decimal.
-        Ex. [1, 5, 0.5] Då är det ett slumpmässigt tal mellan 1 och 5 med steg av 0.5.
-    Det går också att ha en lista av karaktärer eller ord som variablen kan anta.
-        Ex. ['a', 'b', 'c', ..., 'n']
-        Ex. ['Medicin 1', 'Medicin 2', ..., 'Medicin n']
+## **Formatering av varierande variabler**
 
-#### Avancerat
-Om man vill ha mer kontroll över variabelgenereringen går det genom att lägga till en sträng som extra variable. Kalla den condition (UNDERLINE THIS WORD AND BOLD) och formatera strängen efter de nedanstående reglerna.
-    Om en variabel måste vara störe/mindre än eller störe/mindre eller lika med en annan använd:
-        Större: big_var > small_var
-        Större eller lika med: big_var >= small_var
-        Mindre: small_var < big_var
-        Mindre eller lika med: small_var <= big_var
+### **Tal inom intervall**
+- Anges med `[min, max]`, ex:
+  ```json
+  { "var1": [4, 16] }
+  ```
+  **Ger ett heltal mellan 4 och 16.**
 
-    Om du har en variabel för till exempel en medicin, %%medicin_typ%% och olika mediciner har olika doser så kan man kalla en variabel %%valfritt_namn_1%% som man vill ska vara dosen. 
-    Frågan hade kunnat se ut som:
-        "Om läkaren skriver up %%valfritt_namn_1%%mg av %%medicin_typ%% ..."
-            vi antar att medicin_typ är ['Medicin 1', 'Medicin 2', 'Medicin 3']
+### **Decimaltal eller heltal med steg**
+- Format `[min, max, steg]`, ex:
+  ```json
+  { "var4": [1, 10, 0.1] }
+  ```
+  **Ger ett slumpmässigt värde mellan 1 och 10 med en decimal.**
 
-    Om man då inte lägger till en [lista] för valfritt_namn_1(underline) istället skriver du:
-        valfritt_namn_1 = medicin_typ ? [2,5,10], [3,6,8], [1,5, 0.5]
-            Då kommer valfritt_namn_1 att anta värdet i den listan som är på 'samma plats'
-                är det Medicin 1 blir valfritt_namn_1 = [2,5,10]
-                är det Medicin 2 blir valfritt_namn_1 = [3,6,8]
-                och så vidare...
-            NOTE: Det måste vara lika många listor efter ? som det finns alternativ för medicin_typ.
-                Om det är så att Medicin 1 och 2 har samma får man skriva det två gånger
-                    valfritt_namn_1 = medicin_typ ? [2,5,10], [2,5,10], [1,5, 0.5]
-            NOTE: Hur listorna fungerar är som beskrivs ovan.
+- Exempel:
+  ```json
+  { "var5": [-10, 10, 0.5] }
+  ```
+  **Ger ett slumpmässigt värde mellan -10 och 10 med steg på 0.5.**
 
+> **OBS!** `steg` måste vara mindre än `max - min`.
+
+### **Välj från lista av ord eller siffror**
+- Exempel:
+  ```json
+  { "var2": [20, 10] }
+  ```
+  **Ger antingen 20 eller 10.**
+  
+  > **OBS!** Om bara `två värden` anges måste det största anges först.
+  > **OBS!** Om `tre värden` anges får det inte följa `[min, max, steg]` 
+
+- Exempel med flera alternativ:
+  ```json
+  { "var3": [5, 10, 15, 20] }
+  ```
+  **Ger något av värdena 5, 10, 15 eller 20.**
+
+- Exempel:
+  ```json
+  { "medicin": ["Medicin A", "Medicin B", "Medicin C"] }
+  ```
+  **Ger en av de specificerade medicinerna.**
+
+
+## **Avancerade regler**
+Vill du ha mer kontroll över hur variabler genereras kan du använda `condition`.
+
+### **Villkor mellan variabler**
+- Större än: >
+- Mindre än: <
+- Större eller lika med: >=
+- Mindre eller lika med: <=
+
+Exempel:
+```json
+{ "big_var": [10, 50], "small_var": [1, 10], "condition": "big_var > small_var" }
+```
+**Säkerställer att `big_var` alltid är större än `small_var`.**
+
+### **Regler baserat på en annan variabel**
+- istället för en lista sätt variabel till "varibel_1 ? [1], [2], [3]"
+- Listorna följer samma regler.
+- Exempel:
+  ```json
+  { "medicin_typ": ["Medicin A", "Medicin B"], "dos": "medicin_typ ? [2, 5, 10], [2, 4, 0.5]" }
+  ```
+  - Om `medicin_typ = Medicin A`, ges `dos = [2, 5, 10]`
+  - Om `medicin_typ = Medicin B`, ges `dos = [2, 4, 0.5]`
+
+> **OBS!** Det måste finnas lika många listor som alternativ för `medicin_typ`.
+
+---
+
+### **Exempel på en fullständig fråga med avancerade regler**
+```json
+{
+    "question": "Läkaren har ordinerat %%dosage%% mg x %%antal%% subcutant. Tillgängligt: Morfin %%available_dose%% mg/ml. Hur många ml motsvarar en enkeldos?",
+    "answerFormula": "dosage / available_dose",
+    "answerUnit": "ml",
+    "variatingValues": "{'dosage': [5,10,15,20], 'antal': [1,5], 'available_dose': [5, 10, 15, 20], 'condition': 'dosage <= available_dose'}",
+    "course": "KM1423",
+    "questionType": "Dosage Calculation"
+}
+```
 
     
 
