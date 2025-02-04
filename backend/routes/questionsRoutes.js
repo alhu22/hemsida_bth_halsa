@@ -1,26 +1,32 @@
 const express = require("express");
-const { getRandomQuestion, addQuestion } = require("../models/questionModel");
 const router = express.Router();
+const QuestionModel = require("../models/questionModel"); 
 
-// Endpoint to get a question for a specific course or type/types
-router.get("/get_question", async (req, res) => {
+// 🔍 GET a random question with optional course and type filtering
+router.get("/random", async (req, res) => {
     try {
-        const { course, question_types } = req.query; // Use query params instead of body
-        
-        if (!course || !question_types) {
-            return res.status(400).json({ success: false, message: "Missing parameters" });
+        const { course, question_type } = req.query;
+
+        let query = {};
+        if (course) query.course = course;
+        if (question_type) query.question_type = question_type;
+
+        const questionCount = await QuestionModel.countDocuments(query);
+        if (questionCount === 0) {
+            return res.status(404).json({ success: false, message: "No questions found." });
         }
 
-        const question = await getRandomQuestion(course, question_types.split(","));
-        
+        const randomIndex = Math.floor(Math.random() * questionCount);
+        const question = await QuestionModel.findOne(query).skip(randomIndex).lean();
+
         if (!question) {
-            return res.status(404).json({ success: false, message: "No question found" });
+            return res.status(404).json({ success: false, message: "No questions found." });
         }
 
-        res.status(200).json({ success: true, data: question });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Error retrieving data" });
+        res.json({ success: true, question });
+    } catch (error) {
+        console.error("Error fetching random question:", error);
+        res.status(500).json({ success: false, message: "Internal server error." });
     }
 });
 

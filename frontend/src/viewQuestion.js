@@ -13,25 +13,64 @@ export default function ViewQuestion() {
         setErrorMessage("");
         setQuestionData(null);
 
-        try {
-            const response = await axios.get("http://localhost:5000/api/question/random", {
-                params: {
-                    course: course || undefined, // Only send if not empty
-                    question_type: questionType || undefined
-                }
-            });
+        // try {
+        //     const response = await axios.get("http://localhost:5000/api/question/random", {
+        //         params: {
+        //             course: course || undefined,
+        //             question_type: questionType || undefined
+        //         }
+        //     });
 
-            if (response.data.success) {
-                setQuestionData(response.data.question);
-            } else {
-                setErrorMessage(response.data.message || "No question found.");
-            }
-        } catch (err) {
-            setErrorMessage(err.response?.data?.message || "Failed to fetch question. Try again.");
-        } finally {
-            setIsLoading(false);
-        }
+        //     if (response.data.success) {
+        //         const formatted = generateQuestion(
+        //             rawQuestion.question,
+        //             rawQuestion.variatingValues,
+        //         );
+
+        //         setQuestionData({
+        //             formattedQuestion: formatted.formattedQuestion,
+        //             computedAnswer: formatted.values
+        //         });
+        //     } else {
+        //         setErrorMessage(response.data.message || "No question found.");
+        //     }
+        // } catch (err) {
+        //     setErrorMessage(err.response?.data?.message || "Failed to fetch question. Try again.");
+        // } finally {
+        //     setIsLoading(false);
+        // }
     };
+
+    /**
+     * Generate a formatted question with computed answer.
+     * @param {string} questionTemplate - The question template with placeholders.
+     * @param {Object} variatingValues - The possible values for variables.
+     * @returns {Object} An object with formattedQuestion and the computed answer.
+     */
+    const generateQuestion = (questionTemplate, variatingValues) => {
+        let formattedQuestion = questionTemplate;
+
+    
+        // Replace variables with random values
+        for (const [variable, values] of Object.entries(variatingValues)) {
+            if (Array.isArray(values) && values.length == 2) {
+                const randomValue = Math.floor(Math.random() * (values[1] - values[0] + 1)) + values[0];
+                selectedValues[variable] = randomValue;
+                formattedQuestion = formattedQuestion.replaceAll(`%%${variable}%%`, randomValue);
+            }
+        }
+    
+        // Compute the answer
+        try {
+            const formulaWithValues = answerFormula.replace(/var_\d+/g, match => selectedValues[match] || 0);
+            computedAnswer = eval(formulaWithValues); // Safe eval usage for controlled inputs
+        } catch (error) {
+            console.error("Error evaluating answer formula:", error);
+        }
+    
+        return { formattedQuestion, values: selectedValues };
+    };
+    
 
     return (
         <div style={{ padding: "20px", border: "1px solid #ddd", borderRadius: "8px", width: "400px", boxShadow: "0px 0px 10px rgba(0,0,0,0.1)" }}>
@@ -66,11 +105,11 @@ export default function ViewQuestion() {
                 {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
                 {questionData && (
                     <div style={{ marginTop: "20px", padding: "10px", border: "1px solid #ccc", borderRadius: "5px", backgroundColor: "#f9f9f9" }}>
-                        <p><strong>Question:</strong> {questionData.question}</p>
-                        <p><strong>Answer Formula:</strong> {questionData.answerFormula}</p>
-                        <p><strong>Unit:</strong> {questionData.answerUnit}</p>
-                        <p><strong>Course:</strong> {questionData.course}</p>
-                        <p><strong>Type:</strong> {questionData.question_type}</p>
+                        <p><strong>Question:</strong> {questionData.question || "N/A"}</p>
+                        <p><strong>Answer Formula:</strong> {questionData.answerFormula || "N/A"}</p>
+                        <p><strong>Unit:</strong> {questionData.answerUnit || "N/A"}</p>
+                        <p><strong>Course:</strong> {questionData.course || "N/A"}</p>
+                        <p><strong>Type:</strong> {questionData.question_type || "N/A"}</p>
                     </div>
                 )}
             </div>

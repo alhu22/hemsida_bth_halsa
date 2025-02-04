@@ -42,50 +42,37 @@ const addQuestion = async (question, answerFomula, answerUnit, variatingValues, 
 };
 
 /**
- * Fetch a random question matching course and question type.
- * @param {string} course - The selected course.
- * @param {string[]} questionTypes - An array of possible question types.
- * @returns {Promise<{question: string, answer: number}>} The formatted question and correct answer.
- */
-const getRandomQuestion = async (course, questionTypes) => {
-    return new Promise((resolve, reject) => {
-        const placeholders = questionTypes.map(() => "?").join(",");
-        const query = `
-            SELECT * FROM question_data 
-            WHERE course = ? 
-            AND question_type IN (${placeholders}) 
-            ORDER BY RANDOM() 
-            LIMIT 1
-        `;
-
-        db.get(query, [course, ...questionTypes], (err, row) => {
-            if (err) return reject(err);
-            if (!row) return resolve(null);
-
-            try {
-                const variatingValues = JSON.parse(row.variating_values);
-                const { formattedQuestion, answer } = generateQuestion(row.question, variatingValues);
-                resolve({ question: formattedQuestion, answer });
-            } catch (error) {
-                reject("Error parsing variating values.");
-            }
-        });
-    });
-};
-
-/**
  * Generate a formatted question and correct answer.
  * @param {string} questionTemplate - The question template with placeholders.
- * @param {Array} variatingValues - A list containing variables to replace in the question.
+ * @param {Object} variatingValues - An object containing variables with possible values.
+ * @param {string} answerFormula - A string formula that calculates the answer.
  * @returns {Object} An object with formattedQuestion and the computed answer.
  */
-const generateQuestion = (questionTemplate, variatingValues) => {
+const generateQuestion = (questionTemplate, variatingValues, answerFormula) => {
     let formattedQuestion = questionTemplate;
     let computedAnswer = null;
+    let selectedValues = {}; // Store the randomly selected values
 
+    // Replace variables in the question template
+    for (const [variable, values] of Object.entries(variatingValues)) {
+        if (Array.isArray(values) && values.length > 0) {
+            const randomValue = values[Math.floor(Math.random() * values.length)]; // Select random value
+            selectedValues[variable] = randomValue;
+            formattedQuestion = formattedQuestion.replaceAll(`%%${variable}%%`, randomValue);
+        }
+    }
+
+    // Compute the answer by replacing variables in the answer formula and evaluating it
+    try {
+        const formulaWithValues = answerFormula.replace(/var_\d+/g, match => selectedValues[match] || 0);
+        computedAnswer = eval(formulaWithValues); // Using eval (ensure input is validated in real use cases)
+    } catch (error) {
+        console.error("Error evaluating answer formula:", error);
+    }
 
     return { formattedQuestion, answer: computedAnswer };
 };
 
 
-module.exports = { getRandomQuestion, addQuestion };
+
+module.exports = { generateQuestion, addQuestion };
