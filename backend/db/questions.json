@@ -1,0 +1,74 @@
+[
+    {
+        "question": "Omvandla %%number%%  %%first_prefix%%g till %%second_prefix%%g.",
+        "answerFormula": "number *",
+        "answerUnit": "%%second_prefix%%g",
+        "variatingValues": "{'number' [0.01, 1000], 'first_prefix': ['m', 'μ', ''], 'second_prefix' : ['m','μ', '']}",
+        "course": "KM1423",
+        "questionType": "Enhetsomvandling"
+    },
+    {
+        "question": "Omvandla %%number%%  %%first_prefix%%l till %%second_prefix%%l.",
+        "answerFormula": "number *",
+        "answerUnit": "%%second_prefix%%l",
+        "variatingValues": "{'number' [0.01, 1000], 'first_prefix': ['m', 'μ', ''], 'second_prefix' : ['m','μ', '']}",
+        "course": "KM1423",
+        "questionType": "Enhetsomvandling"
+    },
+    {
+        "question": "Läkaren har ordinerat Morfin %%dosage%% mg x %%antal%% subcutant. Tillgängligt: Morfin %%avalible_dose%% mg/ml. Hur många ml motsvarar en enkeldos?",
+        "answerFormula": "avalible_dose / dosage",
+        "answerUnit": "ml",
+        "variatingValues": "{'dosage' : [5,10,15,20], 'antal': [1,5], 'avalible_dose': [5, 10, 15, 20], 'condition': 'dosage > 'avalible_dose'}",
+        "course": "KM1423",
+        "questionType": "Dosage Calculation"
+    },
+    {
+        "question": "%%name%% ordineras %%dosage%% µg Digoxin®. Tillgängligt preparat T. Digoxin %%tablet_dose%% mg. Hur många tabletter motsvarar ordinationen?",
+        "answerFormula": "dosage / (tablet_dose * 1000)",
+        "answerUnit": "tablets",
+        "variatingValues": "{'dosage': [125, 250], 'tablet_dose': [0.25, 0.5]}",
+        "course": "KM1423",
+        "questionType": "Dosage Calculation"
+    },
+    {
+        "question": "Fru Stål ordineras 125 µg Digoxin®. Tillgängligt preparat T. Digoxin 0,25 mg. Hur många tabletter motsvarar ordinationen?",
+        "answerFormula": "125 / 250",
+        "answerUnit": "tablets",
+        "variatingValues": "{}",
+        "course": "KM1423",
+        "questionType": "Dosage Calculation"
+    },
+    {
+        "question": "Vera ordineras 250 µg Neostigmin®. Tillgängligt preparat injektionsvätska Neostigmin® 2,5 mg/ml. Hur många ml motsvarar ordinationen?",
+        "answerFormula": "250 / 2500",
+        "answerUnit": "ml",
+        "variatingValues": "{}",
+        "course": "KM1423",
+        "questionType": "Dosage Calculation"
+    },
+    {
+        "question": "En patient är ordinerad 0,48 ml injektionsvätska insulin Novorapid® med styrkan 100E/ml. Hur många E motsvarar detta?",
+        "answerFormula": "0.48 * 100",
+        "answerUnit": "E",
+        "variatingValues": "{}",
+        "course": "KM1423",
+        "questionType": "Dosage Calculation"
+    },
+    {
+        "question": "Elisabet ordineras 12,5 mg Kåvepenin/kg kroppsvikt/dos. Hon väger 64 kg. Hur många mg Kåvepenin erhåller hon per dostillfälle?",
+        "answerFormula": "12.5 * 64",
+        "answerUnit": "mg",
+        "variatingValues": "{}",
+        "course": "KM1423",
+        "questionType": "Dosage Calculation"
+    },
+    {
+        "question": "Din patient är ordinerad 10 ml Heminevrin 50 mg/ml, oral lösning. Hur många milligram motsvarar detta?",
+        "answerFormula": "10 * 50",
+        "answerUnit": "mg",
+        "variatingValues": "{}",
+        "course": "KM1423",
+        "questionType": "Dosage Calculation"
+    }
+]
