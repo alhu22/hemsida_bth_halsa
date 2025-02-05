@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Page</title>
+    <link rel="icon" href="images/bth.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            background: linear-gradient(to bottom right, #fef3d6, #b3d4fc);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            /* background-image: url('images/questions.png'); */
+        }
+        .quiz-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 600px;
+            height: 400px;
+        }
+
+        p {
+            font-size: 12px;  /* Small but readable */
+            line-height: 1; /* Adjust line spacing */
+            color: #333;      /* Dark color for readability */
+            font-family: Arial, sans-serif; /* Clear font */
+        }
+
+        input {
+            width: 50%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .hint {
+            display: none;
+            margin-top: 10px;
+            color: #555;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin-top: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: font-size 0.3s ease-in-out;
+        }
+
+        button.next {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+        }
+
+        button.previous {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+        }
+
+        .count {
+            position: absolute;
+            bottom: 30px;
+            right: 150px;
+            color: black;
+            font-size: large;
+        }
+
+        button:hover {
+            font-size: 18px;
+        }
+
+        .calculator {
+            display: block;
+            margin-top: 15px;
+            font-size: 24px;
+            text-decoration: none;
+            color: #2c3e50;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .correct {
+            color: green;
+        }
+
+        .incorrect {
+            color: red;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div>
+            <h2><%= question %></h2>
+            <p>Answer with one decimal</p>
+        </div>
+        <form id="quiz-form">
+            <input type="text" id="userAnswer" name="userAnswer" placeholder="Enter your answer" required>
+            <button type="submit">Submit</button>
+        </form>
+        <div id="result"></div>
+        
+        <a class="calculator" href="https://www.desmos.com/calculator?lang=sv-SE" target="_blank">
+            <i class="fas fa-calculator"></i>
+        </a>
+        
+        <button onclick="showHint()">Show Hint</button>
+        <p class="hint" id="hint"><%= hint %></p>
+        
+        <p class="count"><%= count %> / 3</p>
+        
+        <!-- Previous Button -->
+        <button class="previous" onclick="goBack()">Previous</button>
+        
+        <!-- Next Button -->
+        <form action="/Next" method="POST">
+            <button class="next" type="submit">Next</button>
+            <input type="hidden" name="count" value="<%= count %>">
+        </form>
+    </div>
+
+    <script>
+        // Handle form submission
+        document.getElementById('quiz-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting
+
+            const userAnswer = document.getElementById('userAnswer').value.trim();
+            const correctAnswer = "<%= correctAnswer %>"; // Replace with the correct answer from your backend
+            const resultDiv = document.getElementById('result');
+
+            if (userAnswer === correctAnswer || userAnswer === correctAnswer + ".0") {
+                resultDiv.textContent = "Correct! 🎉";
+                resultDiv.className = "correct";
+            } else {
+                resultDiv.textContent = "Incorrect ❌";
+                resultDiv.style.color = "red";
+                resultDiv.innerHTML += `<br><span style="color: green;">Correct answer: ${correctAnswer}</span>`;
+            }
+        });
+
+        // Show hint
+        function showHint() {
+            document.getElementById('hint').style.display = 'block';
+        }
+
+        // Go back to the previous page
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Question</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to bottom right, #fef3d6, #b3d4fc);
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        .container {
+            z-index: 2;
+            width: 450px;
+            height: 600px;
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            width: 95%;
+        }
+
+        button {
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Add Question</h2>
+        <form id="add-question-form" action="/addquestion" method="POST">
+            <label>Question</label>
+            <input type="text" id="question" name="question" required />
+        
+            <label for="course">Course</label>
+            <select id="course" name="course" class="form-select" required style="height: 50px; width: 100%;">
+                <option value="" disabled selected>Select a course</option>
+                <option value="course1">Course 1</option>
+                <option value="course2">Course 2</option>
+                <option value="course3">Course 3</option>
+                <option value="add-course">Add Course</option>
+            </select>
+            
+            <div id="customCourseContainer" style="display: none; margin-top: 10px;">
+                <label for="customCourse">Enter Course Name</label>
+                <input type="text" id="customCourse" name="customCourse" class="form-control" placeholder="Custom Course" />
+            </div>
+            
+            <label>Question Type</label>
+            <input type="text" id="questionType" name="question_type" required />
+        
+            <label>Variating Values (JSON)</label>
+            <input type="text" id="variatingValues" name="variating_values" required />
+        
+            <button type="submit">Add Question</button>
+        </form>
+    </div>
+
+    <script>
+        // JavaScript to show/hide the custom course input field
+        document.getElementById('course').addEventListener('change', function() {
+            const customCourseContainer = document.getElementById('customCourseContainer');
+            if (this.value === 'add-course') {
+                customCourseContainer.style.display = 'block';
+            } else {
+                customCourseContainer.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
