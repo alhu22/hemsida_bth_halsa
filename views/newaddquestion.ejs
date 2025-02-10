@@ -55,9 +55,9 @@
 <body>
         <div class="form-box">
             <h2>Add Question</h2>
-            <form action="/api/question/add" method="POST">
+            <form class="myform" action="/addQ" method="POST">
                 <label>Question</label>
-                <input type="text" name="question" placeholder="Ex. Question %%var_1%%kg rest of question %%var_2%%?" required>
+                <input type="text" id="questionInput" name="question" placeholder="Ex. Question %%var_1%%kg rest of question %%var_2%%?" required>
 
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <div style="flex: 2;">
@@ -66,15 +66,17 @@
                     </div>
                     <div style="flex: 1;">
                         <label>Unit</label>
-                        <select name="answerUnit" id="answerUnit" style=" height: 40px; padding: 8px;">
-                            <option value="" disabled selected>select a unit</option>
-                            <option value="unit1">kg</option>
-                            <option value="unit2">lbs</option>
-                            <option value="add-unit">add unit</option>
-                        </select>
-
+                        <select name="answerUnit" id="answerUnit" style="height: 40px; padding: 8px;">
+                            <option value="" disabled selected>Select a unit</option>
+                        
+                            <% units.forEach(u => { %>
+                                <option value="<%= u.unit %>"><%= u.unit %></option>
+                            <% }); %>
+                        
+                            <option value="add-unit">Add unit</option>
+                        </select>                        
                         <div id="add-unit" style="display: none;">
-                            <input type="text" name="answerUnit" placeholder="Ex. kg">
+                            <input type="text" id="customUnit" name="answerUnit" placeholder="Ex. kg">
                         </div>
                     </div>
                 </div>
@@ -96,17 +98,18 @@
             </form>
         </div>
 
-    <script>
-        const answerUnit = document.getElementById('answerUnit');
-        const addUnit = document.getElementById('add-unit');
-
-        answerUnit.addEventListener('change', () => {
-            if (answerUnit.value === 'add-unit') {
-                addUnit.style.display = 'block';
-            } else {
-                addUnit.style.display = 'none';
-            }
-        });
-    </script>
+        <script>
+            const answerUnit = document.getElementById('answerUnit');
+            const addUnit = document.getElementById('add-unit');
+        
+            answerUnit.addEventListener('change', () => {
+                if (answerUnit.value === 'add-unit') {
+                    addUnit.style.display = 'block';
+                    answerUnit.style.display = 'none';
+                } else {
+                    addUnit.style.display = 'none';
+                }
+            });
+        </script>
 </body>
 </html>

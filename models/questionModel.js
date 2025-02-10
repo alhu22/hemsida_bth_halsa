@@ -107,4 +107,30 @@ const getRandomValue = (range) => {
     return (Math.random() * (max - min) + min).toFixed(2);
 };
 
-module.exports = { getRandomQuestion, addQuestion };
+
+const insert_unit = (unit) => {
+    return new Promise((resolve, reject) => {
+        const query = `INSERT OR IGNORE INTO unit (unit) VALUES (?)`;
+        db.run(query, [unit], function (err) {
+            if (err) {
+                return reject(err);
+            }
+        });
+    });
+};
+
+
+const read_unit = () => {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT * FROM unit`;
+
+        db.all(query, [], (err, rows) => { 
+            if (err) return reject(err);
+            resolve(rows);
+        });
+    });
+};
+
+
+
+module.exports = { getRandomQuestion, addQuestion, insert_unit, read_unit };

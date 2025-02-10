@@ -4,6 +4,9 @@ const bodyParser = require("body-parser");
 const router = express.Router();
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
+const {insert_unit, read_unit } = require("../models/questionModel");
+const e = require("express");
+
 
 router.get("/addquestion", (req, res) => {
     res.render("addQuestion.ejs"); // This will render views/index.ejs
@@ -54,13 +57,31 @@ router.post("/Next", (req, res) => {
     }
 });
 
-router.get("/add-questionnew", (req, res) => {
-    // Render the EJS template with default values
+router.get("/add-questionnew", async (req, res) => {
+    let units;
+    try {
+        units = await read_unit();
+    } catch (error) {
+        console.error("Error fetching units:", error);
+        res.status(500).json({ success: false, message: "Error fetching units" });
+    }
     res.render("newaddquestion.ejs", {
         isSuccess: false,
         responseMessage: "",
         isUploading: false,
-    });
+        units: units
+    }); // This will render views/index.ejs
 });
+
+router.post("/addQ", urlencodedParser, async (req, res) => {
+    const {question, answerFormula,answerUnit,variating_values,course,question_type } = req.body;
+    if(answerUnit[1] === ""){
+        insert_unit(answerUnit[0]);
+    }else{
+        insert_unit(answerUnit[1]);
+    }
+    res.render("home.ejs");
+}
+);
 
 module.exports = router;

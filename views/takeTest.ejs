@@ -88,7 +88,7 @@
         .calculator {
             display: block;
             margin-top: 15px;
-            font-size: 24px;
+            font-size: 18px;
             text-decoration: none;
             color: #2c3e50;
         }
@@ -117,27 +117,26 @@
             <p>Answer with one decimal</p>
         </div>
         <form id="quiz-form">
-            <input type="text" id="userAnswer" name="userAnswer" placeholder="Enter your answer" required>
-            <button type="submit">Submit</button>
+            <input type="text" id="userAnswer" name="userAnswer" placeholder="Skriv in dit svar" required>
+            <button type="submit">Rätta</button>
         </form>
         <div id="result"></div>
         
-        <a class="calculator" href="https://www.desmos.com/fourfunction?lang=sv-SE" target="_blank">
-
-            <i class="fas fa-calculator"></i>
+        <a class="calculator" href="https://www.desmos.com/fourfunction?lang=sv-SE" target="_blank">Miniräknare
+        <i class="fas fa-calculator"></i>
         </a>
         
-        <button onclick="showHint()">Show Hint</button>
+        <button onclick="showHint()">Visa tips</button>
         <p class="hint" id="hint"><%= hint %></p>
         
         <p class="count"><%= count %> / 3</p>
         
         <!-- Previous Button -->
-        <button class="previous" onclick="goBack()">Previous</button>
+        <button class="previous" onclick="goBack()">FÖREGOENDE</button>
         
         <!-- Next Button -->
         <form action="/Next" method="POST">
-            <button class="next" type="submit">Next</button>
+            <button class="next" type="submit">NÄSTA</button>
             <input type="hidden" name="count" value="<%= count %>">
         </form>
     </div>
