@@ -4,7 +4,7 @@
         "answerFormula": "number *",
         "answerUnit": "%%second_prefix%%g",
         "variatingValues": "{'number' [0.01, 1000], 'first_prefix': ['m', 'μ', ''], 'second_prefix' : ['m','μ', '']}",
-        "course": "KM1423",
+        "course": "KM1422",
         "questionType": "Enhetsomvandling"
     },
     {
