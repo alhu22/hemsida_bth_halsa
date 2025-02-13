@@ -9,27 +9,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
-
-// -------------------------- Help Functions -----------------------------
-
-/**
- * Handles database insert errors and returns appropriate messages.
- * @param {Error} err - The SQLite error object.
- * @returns {Object} - An error message and status code.
- */
-const handleInsertError = (err) => {
-    if (!err) return null;
-    if (err.message.includes("FOREIGN KEY constraint failed")) {
-        return { message: "Foreign key constraint failed. Check that referenced data exists.", status: 400 };
-    }
-    if (err.message.includes("UNIQUE constraint failed")) {
-        return { message: "Duplicate entry. This record already exists.", status: 409 };
-    }
-    return { message: "Database error occurred.", status: 500 };
-};
-
-
-// -------------------------- Initialize Database -----------------------------
 db.serialize(() => {
     db.run("PRAGMA foreign_keys = ON;");
 
@@ -92,160 +71,134 @@ db.serialize(() => {
     // db.run("CREATE INDEX idx_question_type ON question_data(question_type_id);");
 });
 
-
-// -------------------------- Insert Functions -----------------------------
-
+// -------------------------- Error Handling -----------------------------
 /**
- * Adds a new question to the database.
- * @param {string} question - The question text.
- * @param {string} answerFormula - The mathematical formula for the answer.
- * @param {number} answerUnitId - The unit ID corresponding to the answer.
- * @param {Object} variatingValues - JSON object of variable values.
- * @param {string} courseCode - The course code the question belongs to.
- * @param {number} questionTypeId - The type ID of the question.
- * @param {number} hintId - The ID of the associated hint.
- * @returns {Promise<void>}
+ * Handles database insert errors and returns appropriate messages.
+ * @param {Error} err - The SQLite error object.
+ * @returns {Object} - An error message and status code.
  */
-const addQuestion = async (question, answerFormula, answerUnitId, variatingValues, courseCode, questionTypeId, hintId) => {
+const handleInsertError = (err) => {
+    if (!err) return null;
+    if (err.message.includes("FOREIGN KEY constraint failed")) {
+        return { message: "Foreign key constraint failed. Check that referenced data exists.", status: 400 };
+    }
+    if (err.message.includes("UNIQUE constraint failed")) {
+        return { message: "Duplicate entry. This record already exists.", status: 409 };
+    }
+    return { message: "Database error occurred.", status: 500 };
+};
+
+// -------------------------- Database Operations -----------------------------
+/**
+ * Adds a new record to the database.
+ * @param {string} table - The table name.
+ * @param {Array<string>} columns - The column names.
+ * @param {Array<any>} values - The values to insert.
+ * @returns {Promise<Object>} - The inserted record ID.
+ */
+const addRecord = (table, columns, values) => {
     return new Promise((resolve, reject) => {
-        db.run(
-            `INSERT INTO question_data (question, answer_formula, answer_unit_id, variating_values, course_code, question_type_id, hint_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [question.trim(), answerFormula.trim(), answerUnitId, JSON.stringify(variatingValues), courseCode.trim(), questionTypeId, hintId],
-            function (err) {
-                const error = handleInsertError(err);
-                if (error) return reject(error);
-                resolve();
-            }
+        const formattedValues = values.map(value => 
+            typeof value === "string" ? value.trim() : 
+            typeof value === "object" ? JSON.stringify(value) : value
         );
+        const placeholders = values.map(() => "?").join(", ");
+        const sql = `INSERT INTO ${table} (${columns.join(", ")}) VALUES (${placeholders})`;
+        db.run(sql, formattedValues, function (err) {
+            const error = handleInsertError(err);
+            if (error) return reject(error);
+            resolve({ id: this.lastID });
+        });
     });
 };
 
 /**
- * Adds a new unit to the database.
- * @param {string} asciiName - The ASCII name of the unit.
- * @param {string} acceptedAnswer - The accepted answer format.
- * @returns {Promise<void>}
+ * Retrieves all records from a table.
+ * @param {string} table - The table name.
+ * @returns {Promise<Array>} - The retrieved records.
  */
-const addUnit = async (asciiName, acceptedAnswer) => {
+const getRecords = (table) => {
     return new Promise((resolve, reject) => {
-        db.run(
-            `INSERT INTO units (ascii_name, accepted_answer) VALUES (?, ?)`,
-            [asciiName.trim(), acceptedAnswer.trim()],
-            function (err) {
-                const error = handleInsertError(err);
-                if (error) return reject(error);
-                resolve();
-            }
-        );
+        db.all(`SELECT * FROM ${table}`, [], (err, rows) => {
+            if (err) return reject({ message: "Database error", status: 500 });
+            resolve(rows);
+        });
     });
 };
 
 /**
- * Adds a new course to the database.
- * @param {string} courseCode - Unique identifier for the course.
- * @param {string} courseName - The full name of the course.
- * @param {Array<number>} questionTypes - List of question type IDs.
- * @returns {Promise<void>}
+ * Retrieves a specific record by ID.
+ * @param {string} table - The table name.
+ * @param {number} id - The record ID.
+ * @returns {Promise<Object>} - The retrieved record.
  */
-const addCourse = async (courseCode, courseName, questionTypes) => {
+const getRecordById = (table, id) => {
     return new Promise((resolve, reject) => {
-        db.run(
-            `INSERT INTO course (course_code, course_name, question_types) VALUES (?, ?, ?)`,
-            [courseCode.trim(), courseName.trim(), JSON.stringify(questionTypes)],
-            function (err) {
-                const error = handleInsertError(err);
-                if (error) return reject(error);
-                resolve();
-            }
-        );
+        db.get(`SELECT * FROM ${table} WHERE id = ?`, [id], (err, row) => {
+            if (err) return reject({ message: "Database error", status: 500 });
+            if (!row) return reject({ message: "Record not found", status: 404 });
+            resolve(row);
+        });
     });
 };
 
 /**
- * Adds a new medicine entry to the database.
- * @param {string} namn - Name of the medicine.
- * @param {string} fassLink - Link to official documentation.
- * @param {Object} skyrkorDoser - JSON object containing dosage information.
- * @returns {Promise<void>}
+ * Updates a record in the database.
+ * @param {string} table - The table name.
+ * @param {number} id - The record ID.
+ * @param {Object} updates - The fields to update.
+ * @returns {Promise<Object>} - The update result.
  */
-const addMedicine = async (namn, fassLink, skyrkorDoser) => {
+const updateRecord = (table, id, updates) => {
     return new Promise((resolve, reject) => {
-        db.run(
-            `INSERT INTO medicine (namn, fass_link, skyrkor_doser) VALUES (?, ?, ?)`,
-            [namn.trim(), fassLink.trim(), JSON.stringify(skyrkorDoser)],
-            function (err) {
-                const error = handleInsertError(err);
-                if (error) return reject(error);
-                resolve();
-            }
-        );
+        const formattedUpdates = Object.keys(updates).reduce((acc, key) => {
+            acc[key] = typeof updates[key] === "string" ? updates[key].trim() : 
+                        typeof updates[key] === "object" ? JSON.stringify(updates[key]) : updates[key];
+            return acc;
+        }, {});
+        
+        const keys = Object.keys(formattedUpdates).map(key => `${key} = ?`).join(", ");
+        const values = [...Object.values(formattedUpdates), id];
+        const sql = `UPDATE ${table} SET ${keys} WHERE id = ?`;
+        db.run(sql, values, function (err) {
+            if (err) return reject({ message: "Database error", status: 500 });
+            if (this.changes === 0) return reject({ message: "Record not found", status: 404 });
+            resolve({ message: "Record updated" });
+        });
     });
 };
 
 /**
- * Adds a new question type to the database.
- * @param {string} name - The name of the question type.
- * @returns {Promise<void>}
+ * Deletes a record from the database.
+ * @param {string} table - The table name.
+ * @param {number} id - The record ID.
+ * @returns {Promise<Object>} - The deletion result.
  */
-const addQuestionType = async (name) => {
+const deleteRecord = (table, id) => {
     return new Promise((resolve, reject) => {
-        db.run(
-            `INSERT INTO qtype (name) VALUES (?)`,
-            [name.trim()],
-            function (err) {
-                const error = handleInsertError(err);
-                if (error) return reject(error);
-                resolve();
+        db.get(`SELECT COUNT(*) AS count FROM ${table} WHERE id = ?`, [id], (err, row) => {
+            if (err) return reject({ message: "Database error", status: 500 });
+            if (!row || row.count === 0) return reject({ message: "Record not found", status: 404 });
+        });
+        
+        db.run(`DELETE FROM ${table} WHERE id = ?`, [id], function (err) {
+            if (err) {
+                if (err.message.includes("FOREIGN KEY constraint failed")) {
+                    return reject({ message: "Cannot delete: Other records reference this entry.", status: 400 });
+                }
+                return reject({ message: "Database error", status: 500 });
             }
-        );
+            if (this.changes === 0) return reject({ message: "Record not found", status: 404 });
+            resolve({ message: "Record deleted" });
+        });
     });
 };
 
-// ----------------------------- Export Functions -----------------------------
-
+// -------------------------- Export Functions -----------------------------
 module.exports = {
-    addQuestion,
-    addUnit,
-    addCourse,
-    addMedicine,
-    addQuestionType
+    addRecord,
+    getRecords,
+    getRecordById,
+    updateRecord,
+    deleteRecord,
 };
-
-
-// ----------------------------- Get Functions -----------------------------
-
-// /**
-//  * Generate a formatted question and correct answer.
-//  * @param {string} questionTemplate - The question template with placeholders.
-//  * @param {Object} variatingValues - An object containing variables with possible values.
-//  * @param {string} answerFormula - A string formula that calculates the answer.
-//  * @returns {Object} An object with formattedQuestion and the computed answer.
-//  */
-// const generateQuestion = (questionTemplate, variatingValues, answerFormula) => {
-//     let formattedQuestion = questionTemplate;
-//     let computedAnswer = null;
-//     let selectedValues = {}; // Store the randomly selected values
-
-//     // Replace variables in the question template
-//     for (const [variable, values] of Object.entries(variatingValues)) {
-//         if (Array.isArray(values) && values.length > 0) {
-//             const randomValue = values[Math.floor(Math.random() * values.length)]; // Select random value
-//             selectedValues[variable] = randomValue;
-//             formattedQuestion = formattedQuestion.replaceAll(`%%${variable}%%`, randomValue);
-//         }
-//     }
-
-//     // Compute the answer by replacing variables in the answer formula and evaluating it
-//     try {
-//         const formulaWithValues = answerFormula.replace(/var_\d+/g, match => selectedValues[match] || 0);
-//         computedAnswer = eval(formulaWithValues); // Using eval (ensure input is validated in real use cases)
-//     } catch (error) {
-//         console.error("Error evaluating answer formula:", error);
-//     }
-
-//     return { formattedQuestion, answer: computedAnswer };
-// };
-
-
-
