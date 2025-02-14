@@ -1,23 +1,30 @@
 import React, { useState } from "react";
-import AddQuestion from "./addQuestion";
-import ViewQuestion from "./viewQuestion";
 import "./App.css";
 
+import AddQuestion from "./AddQuestion"
+import Login from "./Login"
+
+
+
 function App() {
-  const [activeTab, setActiveTab] = useState("upload question");
+  const [activeTab, setActiveTab] = useState("home");
+
+
   return (
     <div className="App">
-      <header className="App-header">
-      <h1>Läkemedelsberäkningar</h1>
+      <div className="container">
+        <h1>Läkemedelsberäkningar</h1>
         <nav>
-          <button onClick={() => setActiveTab("upload question")}>Upload Question</button>
-          <button onClick={() => setActiveTab("get question")}>View Random Question</button>
+          <button onClick={() => setActiveTab("home")}>Home</button>
+          <button onClick={() => setActiveTab("login")}>Login</button>
+          <button onClick={() => setActiveTab("upload")}>Upload Question</button>
         </nav>
         <div>
-          {activeTab === "upload question" && <AddQuestion />}
-          {activeTab === "get question" && <ViewQuestion />}
+          {activeTab === "upload" && <AddQuestion />}
+          {activeTab === "login" && <Login />}
+
         </div>
-      </header>
+      </div>
     </div>
   );
 }

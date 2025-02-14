@@ -24,7 +24,7 @@ db.serialize(() => {
         CREATE TABLE IF NOT EXISTS course (
             course_code TEXT PRIMARY KEY NOT NULL UNIQUE,
             course_name TEXT NOT NULL,
-            question_types TEXT -- List of qtype(id)
+            question_types TEXT CHECK(json_valid(question_types)) -- List of qtype(id)
         )
     `);
 

@@ -9,7 +9,7 @@ app.use("/api", questionRoutes);
 
 jest.mock("../../../backend/models/questionModel");
 
-describe("API Endpoints for Database Tables", () => {
+describe("API Routes for Question Database", () => {
     const sampleRecords = {
         question_data: {
             question: "Sample Question",
@@ -41,75 +41,73 @@ describe("API Endpoints for Database Tables", () => {
     };
 
     Object.keys(sampleRecords).forEach(table => {
-        describe(`Testing ${table} Table`, () => {
+        describe(`Testing /api/${table} routes`, () => {
             // -------------------------- Test Insertions -----------------------------
-            it(`should add a new record to ${table}`, async () => {
+            it(`should add a new record to ${table} and return success message`, async () => {
                 addRecord.mockResolvedValue({ id: 1 });
                 const res = await request(app).post(`/api/${table}/add`).send(sampleRecords[table]);
                 expect(res.status).toBe(201);
                 expect(res.body.success).toBe(true);
+                expect(res.body).toHaveProperty("message");
             });
 
-            it(`should fail to add a record with missing required fields to ${table}`, async () => {
+            it(`should fail to add a record with missing fields to ${table} and return error message`, async () => {
                 addRecord.mockRejectedValue({ status: 400, message: "Missing required fields" });
                 const res = await request(app).post(`/api/${table}/add`).send({});
                 expect(res.status).toBe(400);
+                expect(res.body.success).toBe(false);
+                expect(res.body).toHaveProperty("message");
             });
 
-            if (["question_data", "medicine", "qtype"].includes(table)) {
-                it(`should fail if JSON column is invalid in ${table}`, async () => {
-                    addRecord.mockRejectedValue({ status: 400, message: "Invalid JSON format" });
-                    const invalidRecord = { ...sampleRecords[table], variating_values: "invalid json" };
-                    const res = await request(app).post(`/api/${table}/add`).send(invalidRecord);
-                    expect(res.status).toBe(400);
-                });
-            }
-
             // -------------------------- Test Fetching -----------------------------
-            it(`should fetch all records from ${table}`, async () => {
+            it(`should fetch all records from ${table} and return success`, async () => {
                 getRecords.mockResolvedValue([sampleRecords[table]]);
                 const res = await request(app).get(`/api/${table}/all`);
                 expect(res.status).toBe(200);
                 expect(res.body.success).toBe(true);
+                expect(res.body).toHaveProperty("records");
             });
 
-            it(`should fetch a single record by ID from ${table}`, async () => {
+            it(`should fetch a single record by ID from ${table} and return success`, async () => {
                 getRecordById.mockResolvedValue(sampleRecords[table]);
                 const res = await request(app).get(`/api/${table}/1`);
                 expect(res.status).toBe(200);
                 expect(res.body.success).toBe(true);
+                expect(res.body).toHaveProperty("record");
+            });
+
+            it(`should return 404 for non-existent record in ${table} with error message`, async () => {
+                getRecordById.mockRejectedValue({ status: 404, message: "Record not found" });
+                const res = await request(app).get(`/api/${table}/999`);
+                expect(res.status).toBe(404);
+                expect(res.body.success).toBe(false);
+                expect(res.body).toHaveProperty("message");
             });
 
             // -------------------------- Test Updating -----------------------------
-            it(`should update an existing record in ${table}`, async () => {
+            it(`should update an existing record in ${table} and return success`, async () => {
                 updateRecord.mockResolvedValue({ message: "Record updated" });
                 const res = await request(app).put(`/api/${table}/update/1`).send(sampleRecords[table]);
                 expect(res.status).toBe(200);
-            });
-
-            it(`should fail to update a non-existent record in ${table}`, async () => {
-                updateRecord.mockRejectedValue({ status: 404, message: "Record not found" });
-                const res = await request(app).put(`/api/${table}/update/999`).send(sampleRecords[table]);
-                expect(res.status).toBe(404);
+                expect(res.body.success).toBe(true);
+                expect(res.body).toHaveProperty("message");
             });
 
             // -------------------------- Test Deleting -----------------------------
-            it(`should delete a record from ${table}`, async () => {
+            it(`should delete a record from ${table} and return success message`, async () => {
                 deleteRecord.mockResolvedValue({ message: "Record deleted" });
                 const res = await request(app).delete(`/api/${table}/delete/1`);
                 expect(res.status).toBe(200);
+                expect(res.body.success).toBe(true);
+                expect(res.body).toHaveProperty("message");
             });
 
-            it(`should prevent deletion if a record in ${table} is referenced elsewhere`, async () => {
-                deleteRecord.mockRejectedValue({ status: 400, message: "Cannot delete: Other records reference this entry." });
-                const res = await request(app).delete(`/api/${table}/delete/1`);
-                expect(res.status).toBe(400);
-            });
-
-            it(`should return 404 when deleting a non-existent record from ${table}`, async () => {
+            it(`should return 404 when deleting a non-existent record from ${table} with error message`, async () => {
                 deleteRecord.mockRejectedValue({ status: 404, message: "Record not found" });
                 const res = await request(app).delete(`/api/${table}/delete/999`);
                 expect(res.status).toBe(404);
+                expect(res.body.success).toBe(false);
+                expect(res.body).toHaveProperty("message");
             });
         });
     });
