@@ -50,7 +50,9 @@ export default function ViewQuestion() {
     const generateQuestion = (questionTemplate, variatingValues) => {
         let formattedQuestion = questionTemplate;
 
-    
+        let selectedValues = {};
+        let computedAnswer = null;
+        let answerFormula = "";
         // Replace variables with random values
         for (const [variable, values] of Object.entries(variatingValues)) {
             if (Array.isArray(values) && values.length == 2) {

@@ -18,6 +18,7 @@ function App() {
           <button onClick={() => setActiveTab("home")}>Home</button>
           <button onClick={() => setActiveTab("login")}>Login</button>
           <button onClick={() => setActiveTab("upload")}>Upload Question</button>
+          <button onClick={() => setActiveTab("add")}>Upload Question</button>
         </nav>
         <div>
           {activeTab === "upload" && <AddQuestion />}
