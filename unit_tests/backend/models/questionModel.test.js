@@ -9,73 +9,108 @@ app.use("/api", questionRoutes);
 
 jest.mock("../../../backend/models/questionModel");
 
-describe("API Endpoints for Question Database", () => {
-    const sampleRecord = { id: 1, question: "Sample Question", answer_formula: "x+1" };
-    
-    // -------------------------- Test Insertions -----------------------------
-    it("should add a new question", async () => {
-        addRecord.mockResolvedValue({ id: 1 });
-        const res = await request(app).post("/api/question_data/add").send(sampleRecord);
-        expect(res.status).toBe(201);
-        expect(res.body.success).toBe(true);
-    });
-    
-    it("should fail to add a question with missing fields", async () => {
-        addRecord.mockRejectedValue({ status: 400, message: "Missing required fields" });
-        const res = await request(app).post("/api/question_data/add").send({});
-        expect(res.status).toBe(400);
-    });
+describe("API Endpoints for Database Tables", () => {
+    const sampleRecords = {
+        question_data: {
+            question: "Sample Question",
+            answer_unit_id: 1,
+            answer_formula: "x+1",
+            variating_values: "{\"x\": 2}",
+            course_code: "CS101",
+            question_type_id: 1,
+            hint_id: 1
+        },
+        units: {
+            ascii_name: "unit_name",
+            accepted_answer: "valid answer"
+        },
+        course: {
+            course_code: "CS101",
+            course_name: "Computer Science",
+            question_types: "[1,2]"
+        },
+        medicine: {
+            namn: "Aspirin",
+            fass_link: "http://fass.se/aspirin",
+            skyrkor_doser: "{\"dose\": 500}"
+        },
+        qtype: {
+            name: "Multiple Choice",
+            history_json: "{\"attempts\": 5}"
+        }
+    };
 
-    // -------------------------- Test Fetching -----------------------------
-    it("should fetch all questions", async () => {
-        getRecords.mockResolvedValue([sampleRecord]);
-        const res = await request(app).get("/api/question_data/all");
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-    });
+    Object.keys(sampleRecords).forEach(table => {
+        describe(`Testing ${table} Table`, () => {
+            // -------------------------- Test Insertions -----------------------------
+            it(`should add a new record to ${table}`, async () => {
+                addRecord.mockResolvedValue({ id: 1 });
+                const res = await request(app).post(`/api/${table}/add`).send(sampleRecords[table]);
+                expect(res.status).toBe(201);
+                expect(res.body.success).toBe(true);
+            });
 
-    it("should fetch a single question by ID", async () => {
-        getRecordById.mockResolvedValue(sampleRecord);
-        const res = await request(app).get("/api/question_data/1");
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-    });
+            it(`should fail to add a record with missing required fields to ${table}`, async () => {
+                addRecord.mockRejectedValue({ status: 400, message: "Missing required fields" });
+                const res = await request(app).post(`/api/${table}/add`).send({});
+                expect(res.status).toBe(400);
+            });
 
-    it("should return 404 for non-existent question", async () => {
-        getRecordById.mockRejectedValue({ status: 404, message: "Record not found" });
-        const res = await request(app).get("/api/question_data/999");
-        expect(res.status).toBe(404);
-    });
+            if (["question_data", "medicine", "qtype"].includes(table)) {
+                it(`should fail if JSON column is invalid in ${table}`, async () => {
+                    addRecord.mockRejectedValue({ status: 400, message: "Invalid JSON format" });
+                    const invalidRecord = { ...sampleRecords[table], variating_values: "invalid json" };
+                    const res = await request(app).post(`/api/${table}/add`).send(invalidRecord);
+                    expect(res.status).toBe(400);
+                });
+            }
 
-    // -------------------------- Test Updating -----------------------------
-    it("should update an existing question", async () => {
-        updateRecord.mockResolvedValue({ message: "Record updated" });
-        const res = await request(app).put("/api/question_data/update/1").send({ question: "Updated Question" });
-        expect(res.status).toBe(200);
-    });
+            // -------------------------- Test Fetching -----------------------------
+            it(`should fetch all records from ${table}`, async () => {
+                getRecords.mockResolvedValue([sampleRecords[table]]);
+                const res = await request(app).get(`/api/${table}/all`);
+                expect(res.status).toBe(200);
+                expect(res.body.success).toBe(true);
+            });
 
-    it("should fail to update a non-existent question", async () => {
-        updateRecord.mockRejectedValue({ status: 404, message: "Record not found" });
-        const res = await request(app).put("/api/question_data/update/999").send({ question: "Updated" });
-        expect(res.status).toBe(404);
-    });
+            it(`should fetch a single record by ID from ${table}`, async () => {
+                getRecordById.mockResolvedValue(sampleRecords[table]);
+                const res = await request(app).get(`/api/${table}/1`);
+                expect(res.status).toBe(200);
+                expect(res.body.success).toBe(true);
+            });
 
-    // -------------------------- Test Deleting -----------------------------
-    it("should delete a question", async () => {
-        deleteRecord.mockResolvedValue({ message: "Record deleted" });
-        const res = await request(app).delete("/api/question_data/delete/1");
-        expect(res.status).toBe(200);
-    });
+            // -------------------------- Test Updating -----------------------------
+            it(`should update an existing record in ${table}`, async () => {
+                updateRecord.mockResolvedValue({ message: "Record updated" });
+                const res = await request(app).put(`/api/${table}/update/1`).send(sampleRecords[table]);
+                expect(res.status).toBe(200);
+            });
 
-    it("should prevent deletion if the question is referenced elsewhere", async () => {
-        deleteRecord.mockRejectedValue({ status: 400, message: "Cannot delete: Other records reference this entry." });
-        const res = await request(app).delete("/api/question_data/delete/1");
-        expect(res.status).toBe(400);
-    });
+            it(`should fail to update a non-existent record in ${table}`, async () => {
+                updateRecord.mockRejectedValue({ status: 404, message: "Record not found" });
+                const res = await request(app).put(`/api/${table}/update/999`).send(sampleRecords[table]);
+                expect(res.status).toBe(404);
+            });
 
-    it("should return 404 when deleting a non-existent question", async () => {
-        deleteRecord.mockRejectedValue({ status: 404, message: "Record not found" });
-        const res = await request(app).delete("/api/question_data/delete/999");
-        expect(res.status).toBe(404);
+            // -------------------------- Test Deleting -----------------------------
+            it(`should delete a record from ${table}`, async () => {
+                deleteRecord.mockResolvedValue({ message: "Record deleted" });
+                const res = await request(app).delete(`/api/${table}/delete/1`);
+                expect(res.status).toBe(200);
+            });
+
+            it(`should prevent deletion if a record in ${table} is referenced elsewhere`, async () => {
+                deleteRecord.mockRejectedValue({ status: 400, message: "Cannot delete: Other records reference this entry." });
+                const res = await request(app).delete(`/api/${table}/delete/1`);
+                expect(res.status).toBe(400);
+            });
+
+            it(`should return 404 when deleting a non-existent record from ${table}`, async () => {
+                deleteRecord.mockRejectedValue({ status: 404, message: "Record not found" });
+                const res = await request(app).delete(`/api/${table}/delete/999`);
+                expect(res.status).toBe(404);
+            });
+        });
     });
 });
